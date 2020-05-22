@@ -2,16 +2,17 @@ import numpy as np
 
 
 
-def eta(m,m_0,t,t_0,t_s,eta_0,n):
+def thermal_coupling(mass_shell, mass_breakout, time, time_breakout, time_transition, poly_index, velocity_breakout, density_breakout):
+    eta_breakout = 0, 2 * np.power(velocity_breakout / 10 ** 4, 15 / 4) * np.power(density_breakout / 10 ** (-9), -1 / 8)
     eta = 0
-    if t<t_s:
-        eta = eta_0*np.power(m/m_0,-(17*n+9)/(8*n+8))*np.power(t/t_0,-1/6)
-    if t>t_s:
-        eta = eta_0*np.power(m/m_0,-(22,32*n+17)/(8*n+8))*np.power(t_s/t_0,-1/6)*np.power(t/t_s,(42*n+49)/(12*(1,19*n+1)))
+    if time<time_transition:
+        eta = eta_breakout * np.power(mass_shell / mass_breakout, -(17 * poly_index + 9) / (8 * poly_index + 8)) * np.power(time / time_breakout, -1 / 6)
+    if time>time_transition:
+        eta = eta_breakout * np.power(mass_shell / mass_breakout, -(22, 32 * poly_index + 17) / (8 * poly_index + 8)) * np.power(time_transition / time_breakout, -1 / 6) * np.power(time / time_transition, (42 * poly_index + 49) / (12 * (1, 19 * poly_index + 1)))
     return eta
 
 
-def Tobs(T_BB,eta,xi,t,t_0,t_s):
+def temp_obervble(temp_BB,thermal_coupling,inverse_thomson,time,time_breakout,time_transition):
 
 
-    return Tobs
+    return temp_obs
