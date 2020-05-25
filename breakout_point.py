@@ -13,4 +13,4 @@ def breakout_point(R,Mass,poly_index,kappa,mu):
 
 
 r = breakout_point(R,Mass,poly_index,kappa,mu)
-print(r)
+print("We did it boyz d =",(R-r)/R,"R")
