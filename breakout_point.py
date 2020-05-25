@@ -6,24 +6,11 @@ Mass = 15*1.9*10**(30)
 kappa = 0.034
 
 def breakout_point(R,Mass,poly_index,kappa,mu):
-    condition = 1
-    r = 800*6*10**(8)
-    while condition==1:
-        c = 3*10**8
-        RHO = Mass/R**3
-        rho = RHO*((R-r)/R)**(poly_index)
-        v = (1800*10**3)*(rho/RHO)**(-mu)
-        tau = (kappa*R*RHO)/(poly_index+1)*np.power(rho/RHO,(poly_index+1)/poly_index)
-        if tau == c/v:
-            print("here we are boys",r)
-            condition = 0
-            return r
-        if r>R:
-            print("it happend you donkey")
-            condition = 0
-            return 0
-        else:
-            r=r+1
-    return 0
+    c = 3*10**8
+    RHO = Mass/R**3
+    r = R*(1-np.power((kappa*R*RHO)/(c*(poly_index+1)),(1)/(poly_index*(mu-1)-1))/1800000)
+    return r
+
 
 r = breakout_point(R,Mass,poly_index,kappa,mu)
+print(r)
