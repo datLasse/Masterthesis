@@ -1,6 +1,12 @@
+#This file is meant to store the declarations of all used functions
+
+
 import numpy as np
 from scipy.optimize import fsolve
 
+#--------------------------------------------------------------------------------------------------
+
+#the breakout point and the relevant values are calculated based on the Appendix A
 
 def breakout_values(stellar_radius,stellar_mass,poly_index,opacity,velo_index,E_51,M_15):
     c = 3*10**8
@@ -13,6 +19,9 @@ def breakout_values(stellar_radius,stellar_mass,poly_index,opacity,velo_index,E_
     time_transition = stellar_radius / velocity_breakout
     return radius_breakout, density_breakout, mass_breakout, time_breakout, velocity_breakout
 
+#---------------------------------------------------------------------------------------------------
+
+#the mass of the luminosity shell is calculated for each specific given moment in time compare eq.6
 
 def mass_shell(mass_breakout,time,time_transition,poly_index):
     if time>time_transition:
@@ -22,6 +31,10 @@ def mass_shell(mass_breakout,time,time_transition,poly_index):
         mass_shell = mass_breakout
         return mass_shell
 
+#----------------------------------------------------------------------------------------------------
+
+#the luminosity of the luminosity shell is calculated based on eq.4
+
 def luminosity(time,time_breakout,time_transition,mass_breakout,velocity_breakout,poly_index):
     if time>time_transition:
         luminosity_obs = (mass_breakout*velocity_breakout**2)/(time_breakout)*np.power(time_transition/time_breakout,-4/3)*np.power(time/time_transition,-(2.28*poly_index-2)/(3*(1.19*poly_index+1)))
@@ -29,6 +42,10 @@ def luminosity(time,time_breakout,time_transition,mass_breakout,velocity_breakou
     else:
         luminosity_obs = (mass_breakout*velocity_breakout**2)/(time_breakout)*np.power(time/time_breakout,-4/3)
         return luminosity_obs
+
+#------------------------------------------------------------------------------------------------------
+
+#the thermal coupling coefficent referred to as eta in the paper is calculated based on eq.10,16,18
 
 def coupling_coefficent(mass_shell, mass_breakout, time, time_breakout, time_transition, poly_index, velocity_breakout, density_breakout):
     coupling_breakout = 0, 2 * np.power(velocity_breakout / 10 ** 4, 15 / 4) * np.power(density_breakout / 10 ** (-9), -1 / 8)
@@ -40,6 +57,13 @@ def coupling_coefficent(mass_shell, mass_breakout, time, time_breakout, time_tra
         coupling_shell = eta_breakout * np.power(mass_shell / mass_breakout, -(22.32 * poly_index + 17) / (8 * poly_index + 8)) * np.power(time_transition / time_breakout, -1 / 6) * np.power(time / time_transition, (42 * poly_index + 49) / (12 * (1, 19 * poly_index + 1)))
     return coupling_shell
 
+#----------------------------------------------------------------------------------------------------------
+
+#the coefficent for inverse thomson scattering (referred to as xi) is calculated by first finding the relevant blackbody temperature based
+# on the stefan-boltzmann law and the luminosity then calculating the temperature if inverse compton scattering wouldn't make a contribution
+# and checking if this is indeed the case if so the coefficent and the temperature is returned. If inverse thomspn scattering makes a non-neglible contribution
+# the numercial solver scipy fsolve is used to calculate the temperature which then is used to calculate the thompson coefficent. Based on eq. 13.
+#This function also returns the calculated blackbody temperature.
 
 def thompson_coefficent(luminosity_obs, stellar_radius,coupling_shell,density_shell):
     boltzmann_constant = 5.67*10**(-8)
@@ -60,9 +84,11 @@ def thompson_coefficent(luminosity_obs, stellar_radius,coupling_shell,density_sh
         thompson_coefficent = np.power(0.5*np.log(3*np.power(density_shell/(10**(-6)),-1/2)*np.power(temp_breakout*k_b/100))*(1.6+np.log(3*np.power(density_shell/(10**(-6)),-1/2)*np.power(temp_breakout*k_b/100))),-2)
         return thompson_coefficent, temp_breakout, temp_BB
 
-
+#-----------------------------------------------------------------------------------------------------------------------------
 
 def temp_observable(temp_BB,coupling_shell,thompson_shell,time,time_breakout,time_transition):
-
-
     return temp_obs
+
+
+def density_shell(arg):
+    return densisty
