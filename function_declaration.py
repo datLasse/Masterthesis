@@ -2,33 +2,51 @@
 
 
 import numpy as np
-from scipy.optimize import fsolve
+
 
 #--------------------------------------------------------------------------------------------------
 
 #the breakout point and the relevant values are calculated based on the Appendix A
 
 def breakout_values(stellar_radius,stellar_mass,poly_index,opacity,velo_index,E_51,M_15):
-    c = 3*10**8
-    density_avg = stellar_mass/stellar_radius**3
-    radius_breakout = stellar_radius*(1-np.power(1800*10**3*np.power(E_51/M_15,0.5)*(opacity*stellar_radius*density_avg)/(c*(poly_index+1)),(1)/(poly_index*(velo_index-1)-1))/1800000)
-    density_breakout = density_avg*np.power((stellar_radius-radius_breakout)/stellar_radius,poly_index)
-    mass_breakout = (4*np.pi*stellar_radius**3*density_avg)/(poly_index+1)*np.power(density_breakout/density_avg,(poly_index+1)/poly_index)
-    velocity_breakout = 1800*10**3*(E_51/M_15)**(1/2)*np.power(density_breakout/density_avg, -velo_index)
-    time_breakout = (stellar_radius-radius_breakout)/velocity_breakout
+
+    density_avg = stellar_mass/(stellar_radius**3)
+
+    density_breakout = density_avg * np.power((c*(poly_index+1)/(opacity*stellar_radius*density_avg*1800e3))*np.power(M_15/E_51,0.5),poly_index/(poly_index*(1-velo_index)+1))
+
+    radius_breakout = stellar_radius * (1 - np.power(density_breakout/density_avg,1/poly_index))
+
+    mass_breakout = ((4*np.pi*stellar_radius**3*density_avg)/(poly_index+1))*np.power(density_breakout/density_avg,(poly_index+1)/poly_index)
+
+    velocity_breakout = 1800e3*(E_51/M_15)**(1/2)*np.power(density_breakout/density_avg, -velo_index)
+
+    time_breakout = (stellar_radius - radius_breakout) / velocity_breakout
+
     time_transition = stellar_radius / velocity_breakout
-    return radius_breakout, density_breakout, mass_breakout, time_breakout, velocity_breakout
+
+    thickness = (stellar_radius - radius_breakout)/stellar_radius
+
+    return radius_breakout, density_breakout, mass_breakout, time_breakout, velocity_breakout, time_transition, density_avg, thickness
+
+print(breakout_values(R,M,n,kappa,mu,E_51,M_15))
 
 #---------------------------------------------------------------------------------------------------
 
 #the mass of the luminosity shell is calculated for each specific given moment in time compare eq.6
 
-def mass_shell(mass_breakout,time,time_transition,poly_index):
+def mass_shell(mass_breakout,time,time_transition,poly_index,velo_index):
     if time>time_transition:
-        mass_shell = np.power(time/time_transition,(2*(poly_index+1))/(1.19*poly_index+1))*mass_breakout
+
+        mass_shell = np.power(time/time_transition
+        ,(2*(poly_index+1))
+        /((1+velo_index)*poly_index+1))*mass_breakout #hhh
+
         return mass_shell
+
     else:
+
         mass_shell = mass_breakout
+
         return mass_shell
 
 #----------------------------------------------------------------------------------------------------
@@ -37,10 +55,24 @@ def mass_shell(mass_breakout,time,time_transition,poly_index):
 
 def luminosity(time,time_breakout,time_transition,mass_breakout,velocity_breakout,poly_index):
     if time>time_transition:
-        luminosity_obs = (mass_breakout*velocity_breakout**2)/(time_breakout)*np.power(time_transition/time_breakout,-4/3)*np.power(time/time_transition,-(2.28*poly_index-2)/(3*(1.19*poly_index+1)))
+
+        luminosity_obs = (mass_breakout*velocity_breakout**2)
+        /(time_breakout)
+        *np.power(time_transition/time_breakout
+        ,-4/3)
+        *np.power(time/time_transition
+        ,-(2.28*poly_index-2)
+        /(3*(1.19*poly_index+1)))
+
         return luminosity_obs
+
     else:
-        luminosity_obs = (mass_breakout*velocity_breakout**2)/(time_breakout)*np.power(time/time_breakout,-4/3)
+
+        luminosity_obs = (mass_breakout*velocity_breakout**2)
+        /(time_breakout)
+        *np.power(time/time_breakout
+        ,-4/3)
+
         return luminosity_obs
 
 #------------------------------------------------------------------------------------------------------
@@ -66,22 +98,28 @@ def coupling_coefficent(mass_shell, mass_breakout, time, time_breakout, time_tra
 #This function also returns the calculated blackbody temperature.
 
 def thompson_coefficent(luminosity_obs, stellar_radius,coupling_shell,density_shell):
-    boltzmann_constant = 5.67*10**(-8)
-    k_b = 8.62*10**(-5)
-    temp_BB = np.power(luminosity_obs/(4*np.pi*stellar_radius**2*boltzmann_constant),1/4)
+    stefan_boltzmann_constant = 5.67*10**(-8)
+    boltzmann_constant = 8.62*10**(-5)
+    temp_BB = np.power(luminosity_obs/(4*np.pi*stellar_radius**2*stefan_boltzmann_constant),1/4)
     temp_breakout = coupling_shell**2*temp_BB
-    yMAX = 3*np.power(density_shell/(10**(-6)),-1/2)*np.power(temp_breakout*k_b/100)
+    yMAX = 3*np.power(density_shell/(10**(-6)),-1/2)*np.power(temp_breakout*boltzmann_constant/100)
 
     if yMAX<1:
         thompson_coefficent = 1
         return thompson_coefficent, temp_breakout, temp_BB
-    if 1>0.5*np.log(ymax)*(1.6+np.log(ymax)):
+    if 1>0.5*np.log(yMAX)*(1.6+np.log(yMAX)):
         thompson_coefficent = 1
         return thompson_coefficent, temp_breakout, temp_BB
     else:
-        eq = lambda temp : coupling_shell**2*temp_BB*np.power(0.5*np.log(3*np.power(density_shell/(10**(-6)),-1/2)*np.power(temp*k_b/100))*(1.6+np.log(3*np.power(density_shell/(10**(-6)),-1/2)*np.power(temp*k_b/100))),-2) - temp
-        temp_breakout = fsolve(eq,temp_breakout)
-        thompson_coefficent = np.power(0.5*np.log(3*np.power(density_shell/(10**(-6)),-1/2)*np.power(temp_breakout*k_b/100))*(1.6+np.log(3*np.power(density_shell/(10**(-6)),-1/2)*np.power(temp_breakout*k_b/100))),-2)
+        condition = 1
+        while condition == 1:
+            temp_new = coupling_shell**2*temp_BB*np.power(0.5*np.log(3*np.power(density_shell/(10**(-6)),-1/2)*np.power(temp_breakout*boltzmann_constant/100))*(1.6+np.log(3*np.power(density_shell/(10**(-6)),-1/2)*np.power(temp_breakout*boltzmann_constant/100))),-2)
+            if ((temp_new-temp_breakout)**2)**(0.5)<0.01:
+                condition = 0
+                temp_breakout = temp_new
+            else:
+                temp_breakout = temp_new
+        thompson_coefficent = np.power(0.5*np.log(3*np.power(density_shell/(10**(-6)),-1/2)*np.power(temp_breakout*boltzmann_constant/100))*(1.6+np.log(3*np.power(density_shell/(10**(-6)),-1/2)*np.power(temp_breakout*boltzmann_constant/100))),-2)
         return thompson_coefficent, temp_breakout, temp_BB
 
 #-----------------------------------------------------------------------------------------------------------------------------
@@ -90,5 +128,8 @@ def temp_observable(temp_BB,coupling_shell,thompson_shell,time,time_breakout,tim
     return temp_obs
 
 
-def density_shell(arg):
+def density_shell(time, time_breakout, time_transition, velocity_breakout, radius_breakout, ):
+    if time<time_transition:
+        
+
     return densisty
