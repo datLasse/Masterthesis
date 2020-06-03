@@ -1,4 +1,5 @@
 import numpy as np
+import spherical_phase as sp
 import matplotlib.pyplot as plt
 
 solar_M = 2e30
@@ -13,7 +14,8 @@ E_51 = 1
 M_15 = 1
 c = 3e8
 n_d = 10
-
+stefan_boltzmann_constant = 5.67*10**(-8)
+boltzmann_constant = 8.62*10**(-5)
 
 def breakout_values(stellar_radius,stellar_mass,poly_index,opacity,velo_index,E_51,M_15):
 
@@ -53,13 +55,19 @@ print(t_s)
 
 time = int(t_0)
 luminosity_obs = np.zeros(n_d*24*3600-int(t_0))
+temp = np.zeros(n_d*24*3600-int(t_0))
 #Mag = np.zeros(24*3600-int(t_0))
 print_time = np.zeros(n_d*24*3600-int(t_0))
 for time in range(int(t_0),n_d*24*3600):
     luminosity_obs[time-int(t_0)] = luminosity(time,t_0,t_s,m_0,v_0,n)
-#    Mag[time-int(t_0)] = 4.77-2.5*np.log10(luminosity_obs[time]/L)
     print_time[time-int(t_0)] = time
+    if time>t_s:
+        temp[time-int(t_0)] = sp.temp_observable(time,t_0,t_s,v_0,n, m_0, R,mu, rho_0)
+
 
 
 plt.loglog(print_time,luminosity_obs)
 plt.savefig("Plots\Luminosity.png")
+
+plt.loglog(print_time,temp)
+plt.savefig("Plots\Temperature.png")
