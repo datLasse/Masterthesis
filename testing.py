@@ -1,17 +1,17 @@
 import numpy as np
-import spherical_phase as sp
+import function_declaration as fd
 import matplotlib.pyplot as plt
 
 solar_M = 2e30
 solar_R = 6.96e8
 R = 500*solar_R
-M = 15*solar_M
+M = 7.5*solar_M
 n = 1.5
 L = 3.8e26
 kappa = 0.034
 mu = 0.19
-E_51 = 1
-M_15 = 1
+E_51 = 3
+M_15 = 0.5
 c = 3e8
 n_d = 10
 stefan_boltzmann_constant = 5.67*10**(-8)
@@ -61,13 +61,15 @@ print_time = np.zeros(n_d*24*3600-int(t_0))
 for time in range(int(t_0),n_d*24*3600):
     luminosity_obs[time-int(t_0)] = luminosity(time,t_0,t_s,m_0,v_0,n)
     print_time[time-int(t_0)] = time
-    if time>t_s:
-        temp[time-int(t_0)] = sp.temp_observable(time,t_0,t_s,v_0,n, m_0, R,mu, rho_0)
+    temp[time-int(t_0)] = fd.temp_observable(time,t_0,t_s,v_0,n, m_0, R,mu, rho_0)
+
 
 
 
 plt.loglog(print_time,luminosity_obs)
 plt.savefig("Plots\Luminosity.png")
+
+plt.clf()
 
 plt.loglog(print_time,temp)
 plt.savefig("Plots\Temperature.png")

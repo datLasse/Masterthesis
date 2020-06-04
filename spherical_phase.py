@@ -62,7 +62,7 @@ def temp_observable(time,time_breakout,time_transition,velocity_breakout,poly_in
 
             return temp_obs
 
-        if time >time2:
+        if time > time2:
 
             temp_obs=(temp_BB
                 *np.power(coupling_breakout,2*(1.76*poly_index+1)/(22.32*poly_index+17))
