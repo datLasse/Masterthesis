@@ -4,6 +4,7 @@
 import numpy as np
 
 
+c = 3e8
 #--------------------------------------------------------------------------------------------------
 
 #the breakout point and the relevant values are calculated based on the Appendix A
@@ -24,9 +25,8 @@ def breakout_values(stellar_radius,stellar_mass,poly_index,opacity,velo_index,E_
 
     time_transition = stellar_radius / velocity_breakout
 
-    thickness = (stellar_radius - radius_breakout)/stellar_radius
 
-    return radius_breakout, density_breakout, mass_breakout, time_breakout, velocity_breakout, time_transition, density_avg, thickness
+    return radius_breakout, density_breakout, mass_breakout, time_breakout, velocity_breakout, time_transition, density_avg
 
 
 
@@ -39,7 +39,7 @@ def mass_shell(mass_breakout,time,time_transition,poly_index,velo_index):
 
         mass_shell = np.power(time/time_transition
         ,(2*(poly_index+1))
-        /((1+velo_index)*poly_index+1))*mass_breakout #hhh
+        /((1+velo_index)*poly_index+1))*mass_breakout
 
         return mass_shell
 
@@ -80,15 +80,16 @@ def luminosity(time,time_breakout,time_transition,mass_breakout,velocity_breakou
 #the thermal coupling coefficent referred to as eta in the paper is calculated based on eq.10,16,18
 
 def coupling_coefficent(mass_shell, mass_breakout, time, time_breakout, time_transition, poly_index, velocity_breakout, density_breakout):
-    coupling_breakout = 0.2 * np.power(velocity_breakout*10**-7, 15 / 4) * np.power(density_breakout*10**(6), -1 / 8)
+    coupling_breakout = 0.2 * np.power(velocity_breakout*10**-7, 15 / 4) * np.power(density_breakout*10**(6), -1/8)
     coupling_shell = 0
 
     if time == time_breakout:
         coupling_shell = coupling_breakout
     if time<time_transition:
-        coupling_shell = coupling_breakout * np.power(mass_shell / mass_breakout, -(17 * poly_index + 9) / (8 * poly_index + 8)) * np.power(time / time_breakout, -1 / 6)
+        coupling_shell = (coupling_breakout * np.power(mass_shell / mass_breakout, -(17 * poly_index + 9)/(8 * poly_index + 8)) *
+         np.power(time / time_breakout, -1/6))
     if time>time_transition:
-        coupling_shell = coupling_breakout * np.power(mass_shell / mass_breakout, -(22.32 * poly_index + 17) / (8 * poly_index + 8)) * np.power(time_transition / time_breakout, -1 / 6) * np.power(time / time_transition, (42 * poly_index + 49) / (12 * (1.19 * poly_index + 1)))
+        coupling_shell = coupling_breakout * np.power(mass_shell / mass_breakout, -(22.32 * poly_index + 17)/(8 * poly_index + 8)) * np.power(time_transition / time_breakout, -1 / 6) * np.power(time / time_transition, (42 * poly_index + 49) / (12 * (1.19 * poly_index + 1)))
     return coupling_shell
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -148,24 +149,25 @@ def temp_observable(time,time_breakout,time_transition,velocity_breakout,poly_in
             return temp_obs
 
         if coupling_shell > 1:
-            temp_breakout = coupling_shell**2*temp_BB
+            temp_obs_breakout = coupling_breakout**2*temp_BB
+            print(temp_obs_breakout)
             condition = 1
             while condition == 1:
-                A = 3*np.power((density_breakout*(time_breakout/time_breakout))/(10**(-6)),-1/2)*np.power(temp_breakout*boltzmann_constant/100,9/4)
+                A = 3*np.power((density_breakout*(time_breakout/time_breakout))/(10**(-6)),-1/2)*np.power(temp_obs_breakout*boltzmann_constant/100,9/4)
                 if A< 1 or 0.5*np.log(A)*(1.6+np.log(A))<1:
                     thompson_coefficent_breakout = 1
-                    temp_obs_breakout = coupling_shell**2*temp_BB
+                    temp_obs_breakout = coupling_breakout**2*temp_BB
                     condition = 0
-                    print("first loop xi is smaller than 1")
+                    print("first loop xi is smaller than 1"+ str(temp_obs_breakout))
 
                 else:
 
-                    temp_new = coupling_shell**2*temp_BB*np.power(0.5*np.log(A*B)*(1.6+np.log(A*B)),-2)
-                    print("first loop" + str(temp_new))
-                    if ((temp_new-temp_breakout)**2)**(0.5)<1:
+                    temp_new = coupling_shell**2*temp_BB*np.power(0.5*np.log(3*np.power((density_breakout*(time_breakout/time))/(10**(-6)),-1/2)*np.power(temp_obs_breakout*boltzmann_constant/100,9/4))*(1.6+np.log(3*np.power((density_breakout*(time_breakout/time))/(10**(-6)),-1/2)*np.power(temp_obs_breakout*boltzmann_constant/100,9/4))),-2)
+                #    print("first loop" + str(temp_new))
+                    if ((temp_new-temp_obs_breakout)**2)**(0.5)<0.001:
                         condition = 0
                         temp_obs_breakout = temp_new
-                        thompson_coefficent_breakout = 0.5*np.log(A*B)*(1.6+np.log(A*B))
+                        thompson_coefficent_breakout = 0.5*np.log(A)*(1.6+np.log(A))
 
 
                     else:
@@ -174,18 +176,20 @@ def temp_observable(time,time_breakout,time_transition,velocity_breakout,poly_in
             temp_obs = temp_obs_breakout * np.power(time/time_breakout,-2/3)
             condition1 = 1
             while condition1 == 1:
-                A = 3*np.power((density_breakout*(time_breakout/time_breakout))/(10**(-6)),-1/2)*np.power(temp_breakout*boltzmann_constant/100,9/4)
+                A = 3*np.power((density_breakout*(time_breakout/time_breakout))/(10**(-6)),-1/2)*np.power(temp_obs*boltzmann_constant/100,9/4)
                 if A< 1 or 0.5*np.log(A)*(1.6+np.log(A))<1:
                     thompson_coefficent_obs = 1
                     temp_obs_new = temp_obs_breakout*np.power(time/time_breakout,-2/3)*np.power(thompson_coefficent_obs/thompson_coefficent_breakout,-2)
+                    print(temp_obs_new)
+                    print("second loop xi is smaller than 1")
                     temp_obs = temp_obs_new
                     condition1 = 0
                     return temp_obs
-                    print("second loop xi is smaller than 1")
+
                 else:
-                    temp_obs_new = temp_obs_breakout*np.power(time/time_breakout,-2/3)*np.power(0.5*np.log(A)*(1.6+np.log(A))/thompson_coefficent_breakout,-2)
+                    temp_obs_new = temp_obs_breakout*np.power(time/time_breakout,-2/3)*np.power((0.5*np.log(3*np.power((density_breakout*(time_breakout/time))/(10**(-6)),-1/2)*np.power(temp_obs*boltzmann_constant/100,9/4))*(1.6+np.log(3*np.power((density_breakout*(time_breakout/time))/(10**(-6)),-1/2)*np.power(temp_obs*boltzmann_constant/100,9/4))))/thompson_coefficent_breakout,-2)
                     print("second loop" + str(temp_obs_new))
-                    if ((temp_obs_new-temp_obs)**2)**(0.5)<1:
+                    if ((temp_obs_new-temp_obs)**2)**(0.5)<0.001:
                         condition1 = 0
                         temp_obs = temp_obs_new
                         return temp_obs
@@ -194,6 +198,7 @@ def temp_observable(time,time_breakout,time_transition,velocity_breakout,poly_in
                         temp_obs = temp_obs_new
 
     if time>time_transition:
+
 
         if coupling_shell < 1:
 
@@ -212,7 +217,6 @@ def temp_observable(time,time_breakout,time_transition,velocity_breakout,poly_in
                     *np.power(coupling_breakout*np.power(time_breakout/time_transition,1/6),6*(1.19*poly_index+1)/(12.48*poly_index+1)))
 
 
-
             if time<time2 and time>time_1:
                 temp_obs = (temp_BB*np.power(coupling_breakout,2)*np.power(time_transition/time_breakout,-2/3)*np.power(time_1/time_transition,-(21.27*poly_index+11)/(3*(1.19*poly_index+1)))*np.power(time/time_1,-(3*poly_index+2)/(6*(1.19*poly_index+1))))
 
@@ -226,5 +230,3 @@ def temp_observable(time,time_breakout,time_transition,velocity_breakout,poly_in
                     *np.power(time/time_transition,-(18.48*poly_index**2+20.69*poly_index+6)/((1.19*poly_index+1)*(22.32*poly_index+17))))
 
                 return temp_obs
-
-    return temp_obs

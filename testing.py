@@ -4,14 +4,14 @@ import matplotlib.pyplot as plt
 
 solar_M = 2e30
 solar_R = 6.96e8
-R = 500*solar_R
-M = 7.5*solar_M
+R = 10*solar_R
+M = 10*solar_M
 n = 1.5
 L = 3.8e26
-kappa = 0.034
+kappa = 0.02
 mu = 0.19
-E_51 = 3
-M_15 = 0.5
+E_51 = 5
+M_15 = 10/15
 c = 3e8
 n_d = 10
 stefan_boltzmann_constant = 5.67*10**(-8)
@@ -51,9 +51,21 @@ def luminosity(time,time_breakout,time_transition,mass_breakout,velocity_breakou
 
 r_0,rho_0,m_0,t_0,v_0,t_s,rho_star = breakout_values(R,M,n,kappa,mu,E_51,M_15)
 
-print(t_s)
+print(m_0)
+print(t_s,t_0)
+print(int(t_0))
+
+
+if t_0 <1:
+    t_0 = 1
+print(t_0)
+
+
+
 
 time = int(t_0)
+print(np.power(time/t_0,-1/6))
+
 luminosity_obs = np.zeros(n_d*24*3600-int(t_0))
 temp = np.zeros(n_d*24*3600-int(t_0))
 #Mag = np.zeros(24*3600-int(t_0))
