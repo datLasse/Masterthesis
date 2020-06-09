@@ -2,21 +2,22 @@
 import numpy as np
 from function_declaration import *
 import matplotlib.pyplot as plt
+import magnitude as mag
 
 #importing .txt file with values such as stellar radius and stellar mass
 input_ar = [[500,100,600,800,10,80,50,20],[15,7.5,25,40,10,200,150,70],[1,0.5,3,5,7,10,8,2],[1.5,1.5,1.5,1.5,3,3,3,3],[0.034,0.034,0.034,0.034,0.02,0.02,0.034,0.034]
 ,[0.19,0.19,0.19,0.19,0.19,0.19,0.19,0.19]]
 
-solar_M = 2e30
-solar_R = 6.96e8
-solar_L = 3.8e26
+mass_solar = 2e30
+radius_solar = 6.96e8
+luminosity_solar = 3.8e26
 c = 3e8
-n_d = 20
+n_d = 10
 
 for i in range(8):
-    R = input_ar[0][i]*solar_R
-    M = input_ar[1][i]*solar_M
-    M_15 = M/(15*solar_M)
+    R = input_ar[0][i]*radius_solar
+    M = input_ar[1][i]*mass_solar
+    M_15 = M/(15*mass_solar)
     E_51 = input_ar[2][i]
     n = input_ar[3][i]
     kappa = input_ar[4][i]
@@ -32,11 +33,12 @@ for i in range(8):
     time = int(t_0)
     luminosity_obs = np.zeros(n_d*24*3600-int(t_0))
     temp = np.zeros(n_d*24*3600-int(t_0))
+#    Mag = np.zeros(n_d*24*3600-int(t_0))
     print_time = np.zeros(n_d*24*3600-int(t_0))
     for time in range(int(t_0),n_d*24*3600):
-        luminosity_obs[time-int(t_0)] = luminosity(time,t_0,t_s,m_0,v_0,n)
         print_time[time-int(t_0)] = time
         temp[time-int(t_0)] = temp_observable(time,t_0,t_s,v_0,n, m_0, R,mu, rho_0)
+        luminosity_obs[time-int(t_0)] = luminosity(time,t_0,t_s,m_0,v_0,n)
 
 
 
@@ -51,10 +53,23 @@ for i in range(8):
     ax2.set_title("Luminosity")
     ax2.set_xlabel("Time [s]")
     ax2.set_ylabel("Luminosity [W]")
+#    ax2.plot(print_time,Mag)
+#    plt.xscale("log")
+#    ax2.set_title("Absolute Magnitude")
+#    ax2.set_xlabel("Time [s]")
+#    ax2.set_ylabel("Magnitude")
 
-    plt.savefig("Plots\plot"+str(i)+".png")
+    plt.savefig("Plots\plot_"+str(i)+".png")
 
     plt.clf()
+#
+#    plt.plot(print_time,Mag)
+#    plt.xscale("log")
+#    plt.title("Magnitude Parameter Set"+str(i))
+#    plt.xlabel("Time [s]")
+#    plt.ylabel("Magnitude")
+
+#    plt.savefig("Plots\Magnitude_plot_"+str(i)+".png")
 
 
 
