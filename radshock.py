@@ -31,4 +31,5 @@ xanalytic = x[nhalf] + (1./42.)*np.log((1 - yanalytic)**7/(7.*yanalytic - 1.)) \
 
 
 plt.plot(x,y,'-',xanalytic,yanalytic,'o')
+plt.yscale('log')
 plt.show()
