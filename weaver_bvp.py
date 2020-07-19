@@ -75,7 +75,7 @@ def numdens(x,y):
     return np.vstack((y[1],(-D2*y[1]-D3*y[0]-Q*(1-y[0]/n_eq))/(D1)))
 
 def bc_num(ya, yb):
-    return np.array([ya[0]-n_s,yb[0]-n_eq])
+    return np.array([ya[0]-n_s,ya[1]+Q/v_0])
 
 
 y_num = np.array([np.linspace(n_s, n_eq, n_num),np.linspace(100, 0, n_num)])

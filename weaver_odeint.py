@@ -59,7 +59,7 @@ sol_num = odeint(numdens,(n_s,1000),x_num)
 
 plt.scatter(x_ana,v_ana-v_0/7,label='$v(x) analytic$',color = 'red')
 plt.plot(x_num,sol-v_0/7,label= '$v(x) numerical$')
-#plt.plot(x_num, sol_num[:,0], label='$n(x)$')
+plt.plot(x_num, sol_num[:,0], label='$n(x)$')
 #plt.yscale('log')
 plt.grid(alpha=0.5)
 plt.legend(framealpha=1)
