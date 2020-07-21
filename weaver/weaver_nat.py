@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 E_0 = 1 * 0.0000016021773 #erg: gcm^2/s^2
 m_H = 1.6*10**(-24) #g
 c = 3e11 #cm
-sigma_c = 2*10**(-23)
+
 n_0 = 1*10**(20)   #1/cm^3
 v_0 = (2*E_0/m_H)**(0.5)  #cm/s
 k = 1.38*10**(-16)
 eps_c = 8.01*10**(-9)
-
+#eps_c =1
 #def velocity(x, v):
 #    return np.array([-sigma_c*n_0*v_0*((8*v_0*v[0]-7*v[0]**2-v_0**2)/(2*v[0]*c))])
 
@@ -51,16 +51,19 @@ T = 10**7
 b = 20.3
 n_eq = b*T**3/n_0
 n_s = 2.03*10**(19)/n_0
+sigma_t = 6.65*10**(-25)
+sigma_c = 2*10**(-24)
+#3*T*k*sigma_t
 #Q = 100#this is wrong; very clearly
 
-print(n_s)
+
 def velocity(v,x):
     dvdx = -((8*v-7*v**2-1**2)/(v))
     return dvdx
 
 
 n_num = 400
-x_num = np.linspace(0,10, n_num)
+x_num = np.linspace(0,6, n_num)
 
 sol_velo = odeint(velocity,0.999999,x_num)
 
@@ -77,8 +80,12 @@ def constants(v):
 
 def numdens(x,y):
     v = np.interp(x,x_num,sol_new)
-    D1,D2,D3,n = constants(v)
     theta_e = (10/9)*v_0**2*m_H*(1-v)/y[0]
+    #sigma_c = 3*theta_e*sigma_t
+    n = (n_0)/(v)
+    D1 = c*v/(3*n_0*sigma_c)
+    D2 = v_0*n_0*((v**2-8*v+1)*v_0/(6*v))
+    D3 = n_0**2*v_0**2**sigma_c*(((7*v-1)*(1-v)))/(v*2*c)
     T_e= theta_e/k
     lamb = eps_c/theta_e
     g = 1.226 - 0.475*np.log(lamb) + 0.0013*(np.log(lamb))**2
@@ -104,7 +111,7 @@ def bc_num3(ya, yb):
     return np.array([ya[0]-n_s,yb[1]])
 
 
-y_num = np.array([np.linspace(n_s, n_eq, n_num),np.linspace(1000, 0, n_num)])
+y_num = np.array([np.linspace(n_s, n_eq, n_num),np.linspace(0, 0, n_num)])
 
 #y0= [1,-Q/v_0]
 
@@ -117,22 +124,22 @@ sol_num3 = solve_bvp(numdens, bc_num3, x_num, y_num)
 #if sol_num.status != 0:
 #    print("WARNING: sol.status is %d" % sol_velo.status)
 #print(sol_num.message)
-#temp_e = np.zeros(len(sol_num.y[0]))
+temp_e = np.zeros(len(sol_num3.y[0]))
 #neq = np.zeros(len(sol_num.y[0]))
-#i = 0
-#for i in range(len(diff1)):
-#    temp_e[i] = (10/9)*v_0**2*m_H*(1-sol_new[i])/(sol_num.y[0][i]*k)
+i = 0
+for i in range(len(sol_num3.y[0])):
+    temp_e[i] = (10/9)*v_0**2*m_H*(1-sol_new[i])/(sol_num3.y[0][i]*k)
 #    neq[i] = n_eq = b*temp_e[i]**3
 
 
 #plt.plot(sol_num1.x, sol_num1.y[0], label='n(x) boundary condition only upstream')
 #plt.plot(sol_num2.x, sol_num2.y[0], label='n(x) boundary condition up- and downstream $n_{eq}$')
 plt.plot(sol_num3.x, sol_num3.y[0], label='$n(x) $')
-plt.plot(x_num, sol_velo, label='$v(x)$')
+#plt.plot(x_num, sol_velo, label='$v(x)$')
 #plt.plot(x_num,temp_e, label ='T(x)')
 #plt.plot(x_num,neq,label='$n_{eq}$')
 #plt.plot(x_num,sol_ode[:,0], label='n(x) with odeint')
-plt.yscale('log')
+#plt.yscale('log')
 plt.grid(alpha=0.5)
 plt.legend(framealpha=1)
 plt.show()
