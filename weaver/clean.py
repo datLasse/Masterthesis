@@ -21,7 +21,7 @@ sigma_t = 6.65*10**(-25)
 sigma_c = 3*T*k*sigma_t
 
 
-n_num = 400
+n_num = 1000
 x_num = np.linspace(0,6, n_num)
 #------------SOLUTION FOR VELOCITY USING ODEINT----------------------------------------------
 
