@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 
 #------------CONSTANTS-----------------------------------------------------------------------
+
 E_0 = 1 * 0.0000016021773 #erg: gcm^2/s^2
 m_H = 1.6*10**(-24) #g
 c = 3e11 #cm
@@ -17,20 +18,22 @@ T = 10**6
 b = 20.3
 n_eq = b*T**3/n_0
 n_s = 2.03*10**(19)/n_0
-sigma_t = 6.65*10**(-25)
-sigma_c = 3*T*k*sigma_t
+sigma_c = 6.65*10**(-25)
+#sigma_c = 3*T*k*sigma_t
 
 
 n_num = 1000
 x_num = np.linspace(0,6, n_num)
+
 #------------SOLUTION FOR VELOCITY USING ODEINT----------------------------------------------
 
 
 def velocity(v,x):
-    dvdx = -((8*v-7*v**2-1**2)/(v))
+    dvdx = -((7*v-1)*(1-v)/(v))
     return dvdx
 
-sol_velo = odeint(velocity,0.999999,x_num)
+sol_velo = odeint(velocity,0.999,x_num)
+
 
 
 #-------------SOLUTION FOR NUMBER DENSITY USING SOLVE_BVP-----------------------------------
@@ -40,7 +43,7 @@ sol_new = np.reshape(sol_velo,n_num)
 def numdens(x,y):
     v = np.interp(x,x_num,sol_new)
     theta_e = (10/9)*v_0**2*m_H*(1-v)/y[0]
-    sigma_c = 3*theta_e*sigma_t
+    #sigma_c = 3*theta_e*sigma_t
     n = (n_0)/(v)
     D1 = c*v/(3*n_0*sigma_c)
     D2 = v_0*n_0*((v**2-8*v+1)*v_0/(6*v))
@@ -58,24 +61,20 @@ def bc_num(ya, yb):
     return np.array([ya[0]-n_s,ya[1]])
 
 
-y_num = np.array([np.linspace(n_s, n_eq, n_num),np.linspace(0, 0, n_num)])
+y_num = np.array([np.linspace(n_s, 10000*n_eq, n_num),np.linspace(0, 0, n_num)])
 
 
 sol_num = solve_bvp(numdens, bc_num, x_num, y_num)
-
-
 
 
 #-------------SOLUTION FOR TEMPERATURE USING NUMBERDENSITY AND VELOCITY -------------------------
 
 temp_e = np.zeros(len(sol_num.y[0]))
 
-
 i = 0
 
 for i in range(len(sol_num.y[0])):
     temp_e[i] = (10/9)*v_0**2*m_H*(1-sol_new[i])/(sol_num.y[0][i]*k)
-
 
 
 #--------------PLOTTING SOLUTIONS ------------------------------------------------------------
@@ -85,6 +84,6 @@ plt.plot(x_num, sol_velo, label='$v(x)$')
 plt.plot(x_num,temp_e, label ='T(x)')
 
 plt.yscale('log')
-plt.grid(alpha=0.5)
+plt.grid()
 plt.legend(framealpha=1)
 plt.show()

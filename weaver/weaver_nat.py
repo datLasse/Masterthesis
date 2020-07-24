@@ -47,12 +47,12 @@ eps_c = 8.01*10**(-9)
 
 #-----------------------------------------------------------------------------------------------
 #everything needs to be natural
-T = 10**7
+T = 10**6
 b = 20.3
 n_eq = b*T**3/n_0
 n_s = 2.03*10**(19)/n_0
-sigma_t = 6.65*10**(-25)
-sigma_c = 2*10**(-24)
+sigma_c = 6.65*10**(-25)
+#sigma_c = 2*10**(-24)
 #3*T*k*sigma_t
 #Q = 100#this is wrong; very clearly
 
@@ -62,10 +62,11 @@ def velocity(v,x):
     return dvdx
 
 
-n_num = 400
+n_num = 1000
 x_num = np.linspace(0,6, n_num)
 
-sol_velo = odeint(velocity,0.999999,x_num)
+sol_velo = odeint(velocity,1,x_num)
+
 
 sol_new = np.reshape(sol_velo,n_num)
 
@@ -111,7 +112,7 @@ def bc_num3(ya, yb):
     return np.array([ya[0]-n_s,yb[1]])
 
 
-y_num = np.array([np.linspace(n_s, n_eq, n_num),np.linspace(0, 0, n_num)])
+y_num = np.array([np.linspace(n_s, n_eq*10000, n_num),np.linspace(10, 0, n_num)])
 
 #y0= [1,-Q/v_0]
 
@@ -134,12 +135,39 @@ for i in range(len(sol_num3.y[0])):
 
 #plt.plot(sol_num1.x, sol_num1.y[0], label='n(x) boundary condition only upstream')
 #plt.plot(sol_num2.x, sol_num2.y[0], label='n(x) boundary condition up- and downstream $n_{eq}$')
-plt.plot(sol_num3.x, sol_num3.y[0], label='$n(x) $')
-#plt.plot(x_num, sol_velo, label='$v(x)$')
-#plt.plot(x_num,temp_e, label ='T(x)')
+
+
 #plt.plot(x_num,neq,label='$n_{eq}$')
 #plt.plot(x_num,sol_ode[:,0], label='n(x) with odeint')
 #plt.yscale('log')
-plt.grid(alpha=0.5)
-plt.legend(framealpha=1)
+#plt.grid(alpha=0.5)
+#plt.legend(framealpha=1)
+
+
+
+fig, ax1 = plt.subplots()
+
+ax1.plot(x_num, v_0*(sol_velo-1/7), label='$v(x)$', color = 'blue')
+ax1.plot(x_num,temp_e, label ='T(x)', color = 'red')
+ax1.set_yscale('log')
+ax1.set_ylim(bottom = 1e3)
+ax1.set_ylabel('Temperature [K]; Velocity [cm/s]')
+ax1.tick_params(axis='y')
+
+
+ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+#ax2.set_ylabel('sin', color=color)  # we already handled the x-label with ax1
+ax2.plot(sol_num3.x, sol_num3.y[0]*n_0, label='$n(x) $',color = 'green')
+ax2.set_yscale('log')
+ax2.set_ylim(bottom = 1e19)
+ax2.set_ylabel('Number Density [$cm^{-3}$]')
+ax2.tick_params(axis='y')
+
+
+lines, labels = ax1.get_legend_handles_labels()
+lines2, labels2 = ax2.get_legend_handles_labels()
+ax2.legend(lines + lines2, labels + labels2, loc = 'lower right')
+fig.tight_layout()  # otherwise the right y-label is slightly clipped
+ax2.grid(alpha=0.5)
 plt.show()
