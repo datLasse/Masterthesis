@@ -9,7 +9,7 @@ c = 3e11 #cm
 n_0 = 1*10**(20)   #1/cm^3
 v_0 = (2*E_0/m_H)**(0.5)  #cm/s
 k = 1.38*10**(-16)
-eps_c = 8.01*10**(-9)
+eps_c = 8.01*10**(-9)/10
 #eps_c =1
 #def velocity(x, v):
 #    return np.array([-sigma_c*n_0*v_0*((8*v_0*v[0]-7*v[0]**2-v_0**2)/(2*v[0]*c))])
@@ -65,7 +65,7 @@ def velocity(v,x):
 n_num = 1000
 x_num = np.linspace(0,6, n_num)
 
-sol_velo = odeint(velocity,1,x_num)
+sol_velo = odeint(velocity,0.99999,x_num)
 
 
 sol_new = np.reshape(sol_velo,n_num)
@@ -89,6 +89,7 @@ def numdens(x,y):
     D3 = n_0**2*v_0**2**sigma_c*(((7*v-1)*(1-v)))/(v*2*c)
     T_e= theta_e/k
     lamb = eps_c/theta_e
+    print(D3)
     g = 1.226 - 0.475*np.log(lamb) + 0.0013*(np.log(lamb))**2
     E = -np.log(lamb) - 0.5772
     Q = 5.692*10**(-12)*T_e**(-0.5)*n**2*g*E
@@ -169,5 +170,5 @@ lines, labels = ax1.get_legend_handles_labels()
 lines2, labels2 = ax2.get_legend_handles_labels()
 ax2.legend(lines + lines2, labels + labels2, loc = 'lower right')
 fig.tight_layout()  # otherwise the right y-label is slightly clipped
-ax2.grid(alpha=0.5)
+ax1.grid()
 plt.show()
