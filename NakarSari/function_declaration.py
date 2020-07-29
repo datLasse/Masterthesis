@@ -104,7 +104,7 @@ def coupling_coefficent(mass_shell, mass_breakout, time, time_breakout, time_tra
 
 def temp_blackbody(stellar_radius,time,time_breakout,time_transition,mass_breakout,velocity_breakout,poly_index,energy_breakout):
     stefan_boltzmann_constant = 5.67*10**(-8)
-    temp_BB = np.power(luminosity(time,time_breakout,time_transition,energy_breakout,poly_index)/(4*np.pi*stellar_radius**2*stefan_boltzmann_constant),1/4)
+    temp_BB = np.power(luminosity(time,time_breakout,time_transition,energy_breakout,poly_index)/(stellar_radius**2*stefan_boltzmann_constant),1/4)
     return temp_BB
 #There is a 4  and a pi missing in front of pi
 

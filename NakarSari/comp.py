@@ -4,17 +4,17 @@ from function_declaration import *
 import csv
 
 
-datatime = np.zeros(65)
-datapoints = np.zeros(65)
-datatim = np.zeros(26)
-datalum = np.zeros(26)
+datatime = np.zeros(60)
+datapoints = np.zeros(60)
+datatim = np.zeros(60)
+datalum = np.zeros(60)
 datatimeCTIO = np.zeros(11)
 datapointsCTIO = np.zeros(11)
 datatimeSAAO = np.zeros(8)
 datapointsSAAO = np.zeros(8)
 
 
-with open('Data/Temp_Blin_141.csv') as csv_file:
+with open('Data/temp_7.csv') as csv_file:
     csv_reader = csv.reader(csv_file, delimiter=',')
     i = 0
     for row in csv_reader:
@@ -22,7 +22,7 @@ with open('Data/Temp_Blin_141.csv') as csv_file:
         datapoints[i] = row[1]
         i += 1
 
-with open('Data/2008D_Xray_Couch.csv') as csv_file:
+with open('Data/lum_7.csv') as csv_file:
     csv_reader = csv.reader(csv_file, delimiter=',')
     i = 0
     for row in csv_reader:
@@ -52,11 +52,11 @@ radius_solar = 6.96e8
 luminosity_solar = 3.8e26
 c = 3e8
 
-R = 1*radius_solar
-M = 7*mass_solar
+R = 1.6*500*radius_solar
+M = 1.2*15*mass_solar
 M_15 = M/(15*mass_solar)
-E_51 = 6
-n = 3
+E_51 = 1.2
+n = 1.5
 kappa = 0.034
 mu = 0.19
 
@@ -81,7 +81,7 @@ time_1 = (t_s
 time2 = (t_s
         *np.power(eta_0*np.power(t_0/t_s,1/6),6*(1.19*n+1)/(12.48*n+1)))
 
-runtime = int(3600*24)
+runtime = int(10*3600*24)
 
 #print(runtime)
 time = int(t_0)
@@ -107,14 +107,15 @@ print('Calculated Temperature and Luminosity')
 
 
 
-plt.plot(print_time,temp, label = "Analytic Model from Nakar and Sari")
+plt.plot(print_time,temp, label = "My code")
 plt.yscale('log')
-#plt.plot(datatime-6627,datapoints, label = "Hydrodynamic model from Blinikov")
+plt.plot(datatime,datapoints, label = "Nakar and Saris Fig.7")
 plt.legend()
-plt.axhspan(1.16e6, 1.16e8, color='grey', alpha=0.5)
-#plt.axvspan(t_s, runtime, color='green', alpha=0.5)
-#plt.axvspan(time_1, time2, color='red', alpha=0.5)
-#plt.axvspan(time2, runtime, color='yellow', alpha=0.5)
+plt.xscale('log')
+#plt.axvspan(t_0, t_s, color='grey', alpha=0.25)
+#plt.axvspan(t_s, runtime, color='green', alpha=0.25)
+#plt.axvspan(time_1, time2, color='red', alpha=0.25)
+#plt.axvspan(time2, runtime, color='yellow', alpha=0.25)
 plt.xlabel("Time [s]")
 plt.ylabel("Temperature [K]")
 #plt.xlim(left = 100)
@@ -128,17 +129,17 @@ plt.clf()
 
 print('Plotted Temperature')
 
-plt.plot(print_time,luminosity_obs, label = "Analytic Model from Nakar and Sari")
-plt.plot(datatim,datalum, label = "Hydrodynamic model from Couch")
+plt.plot(print_time,luminosity_obs, label = "My code")
+plt.plot(datatim,datalum, label = "Nakar and Saris Fig.7")
 #plt.scatter(datatimeCTIO,10**datapointsCTIO, label = "Observational Data from CTIO",color='black',marker = '.')
 #plt.scatter(datatimeSAAO,10**datapointsSAAO, label = "Observational Data from SAAO",color = 'black',marker = 'x')
 #plt.xlim(right = 140)
 plt.yscale('log')
-#plt.xscale('log')
+plt.xscale('log')
 plt.xlabel("Time [s]")
 plt.ylabel("Luminosity [erg]")
 plt.legend()
-plt.xlim(left= 0,right = 140)
+#plt.xlim(left= 0,right = 140)
 plt.grid()
 plt.show()
 
