@@ -70,7 +70,7 @@ sol_velo = odeint(velocity,0.99999,x_num)
 
 sol_new = np.reshape(sol_velo,n_num)
 
-
+theta_0 = T*k
 
 def constants(v):
     n = (n_0)/(v)
@@ -81,7 +81,7 @@ def constants(v):
 
 def numdens(x,y):
     v = np.interp(x,x_num,sol_new)
-    theta_e = (10/9)*v_0**2*m_H*(1-v)/y[0]
+    theta_e = (10/9)*v_0**2*m_H*(1-v)/y[0] +theta_0
     #sigma_c = 3*theta_e*sigma_t
     n = (n_0)/(v)
     D1 = c*v/(3*n_0*sigma_c)
@@ -89,10 +89,11 @@ def numdens(x,y):
     D3 = n_0**2*v_0**2**sigma_c*(((7*v-1)*(1-v)))/(v*2*c)
     T_e= theta_e/k
     lamb = eps_c/theta_e
-    print(D3)
+
     g = 1.226 - 0.475*np.log(lamb) + 0.0013*(np.log(lamb))**2
     E = -np.log(lamb) - 0.5772
     Q = 5.692*10**(-12)*T_e**(-0.5)*n**2*g*E
+    print(Q)
     n_eq = b*T_e**3
     #print(y[0])
     return np.vstack((y[1],(-D2*y[1]-D3*y[0]-Q*(1-y[0]/n_eq))/(D1)))
