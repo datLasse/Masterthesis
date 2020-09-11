@@ -8,6 +8,11 @@ import scipy.optimize as sp
 
 
 c = 3e8
+a = 7.5657*10**(-16)
+boltzmann_constant = 8.62*10**(-5)
+stefan_boltzmann_constant = 5.67*10**(-8)
+
+
 #--------------------------------------------------------------------------------------------------
 
 #the breakout point and the relevant values are calculated based on the Appendix A
@@ -32,7 +37,7 @@ def breakout_values(stellar_radius,stellar_mass,poly_index,opacity,velo_index,E_
 
     coupling_breakout = 0.2 * np.power(velocity_breakout/(10**7), 15 / 4) * np.power(density_breakout/(10**(-6)), -1 / 8)
 
-    opticaldepth_breakout = opacity*mass_breakout/stellar_radius**2
+    opticaldepth_breakout = opacity*stellar_radius*density_avg/(poly_index+1)*np.power(density_breakout/density_avg,(poly_index+1)/poly_index)
 
 
     return radius_breakout, density_breakout, mass_breakout, time_breakout, velocity_breakout, time_transition, density_avg, energy_breakout,coupling_breakout, opticaldepth_breakout
@@ -77,10 +82,7 @@ def luminosity(time,time_breakout,time_transition,energy_breakout,poly_index):
 
     else:
 
-        luminosity_obs = ((energy_breakout)
-        /(time_breakout)
-        *np.power(time/time_breakout
-        ,-4/3))
+        luminosity_obs = ((energy_breakout)/(time_breakout))*np.power(time/time_breakout,-4/3)
 
         return luminosity_obs
 
@@ -100,13 +102,35 @@ def coupling_coefficent(mass_shell, mass_breakout, time, time_breakout, time_tra
         coupling_shell = coupling_breakout * np.power(mass_shell / mass_breakout, -(22.32 * poly_index + 17)/(8 * poly_index + 8)) * np.power(time_transition / time_breakout, -1 / 6) * np.power(time / time_transition, (42 * poly_index + 49) / (12 * (1.19 * poly_index + 1)))
     return coupling_shell
 
+#------------------------------------------------------------------------------------------------------------------------------------
+
+def radius(stellar_radius,time,time_transition,poly_index,velo_index):
+    if time> time_transition:
+        r = stellar_radius*np.power(time/time_transition,((1-velo_index)*poly_index+1)/((1+velo_index)*poly_index+1))
+        return r
+
+    else:
+        return stellar_radius
+
+
 #-----------------------------------------------------------------------------------------------------------------------
 
-def temp_blackbody(stellar_radius,time,time_breakout,time_transition,mass_breakout,velocity_breakout,poly_index,energy_breakout):
-    stefan_boltzmann_constant = 5.67*10**(-8)
-    temp_BB = np.power(luminosity(time,time_breakout,time_transition,energy_breakout,poly_index)/(stellar_radius**2*stefan_boltzmann_constant),1/4)
-    return temp_BB
-#There is a 4  and a pi missing in front of pi
+def optical_depth(mass_breakout,opticaldepth_breakout,radius_breakout,radius,poly_index,time,velocity_breakout,velo_index,time_transition):
+    m  = mass_shell(mass_breakout,time,time_transition,poly_index,velo_index)
+    if time>time_transition:
+        optical_depth = opticaldepth_breakout*(m/mass_breakout)**(((1+2*velo_index)*poly_index+1)/(poly_index+1))
+        return optical_depth
+
+    else:
+        optical_depth = opticaldepth_breakout
+        return optical_depth
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+def temp_blackbody(time,time_breakout,time_transition,mass_breakout,velocity_breakout,poly_index,energy_breakout,radius_breakout,opticaldepth_breakout,velo_index,stellar_radius):
+    m = mass_shell(mass_breakout,time,time_transition,poly_index,velo_index)
+    T_BB = ((luminosity(time,time_breakout,time_transition,energy_breakout,poly_index)*optical_depth(mass_breakout,opticaldepth_breakout,radius_breakout,radius,poly_index,time,velocity_breakout,velo_index,time_transition))/(c*a*np.power(radius(stellar_radius,time,time_transition,poly_index,velo_index),2)))**(1/4)
+    return T_BB
 
 #----------------------------------------------------------------------------------------------------------
 
@@ -117,12 +141,11 @@ def temp_blackbody(stellar_radius,time,time_breakout,time_transition,mass_breako
 #This function also returns the calculated blackbody temperature.
 
 def thompson_coefficent(temp_obs,density_breakout,time_breakout,time):
-    #print('i have been summoned')
     boltzmann_constant = 8.617*10**(-5)
     density_unit = 7*density_breakout*10**(-3)*(time_breakout/time)
     temp_unit = temp_obs*boltzmann_constant
-    yMAX = 3*np.power(density_unit/10**(-9),-1/2)*np.power(temp_unit/100,9/4)
-    thompson = (1/2)*np.log(yMAX)*(1.6+np.log(yMAX))
+    yMAX = 3*np.power(7*density_unit/10**(-9),-1/2)*np.power(temp_unit/100,9/4)
+    thompson = 0.5*np.log(yMAX)*(1.6 + np.log(yMAX))
 
     if thompson < 1:
         thompson = 1
@@ -134,143 +157,144 @@ def thompson_coefficent(temp_obs,density_breakout,time_breakout,time):
 
 
 
-def temp_break(temp_obs_breakout,density_breakout,time_breakout,coupling_breakout,temp_BB_breakout):
-
-    return temp_obs_breakout - (coupling_breakout**2/thompson_coefficent(temp_obs_breakout,density_breakout,time_breakout,time_breakout)**2)*temp_BB_breakout
-
-def temp_obser(temp_obs,density_breakout,time_breakout,time,coupling_shell,temp_BB_breakout,temp_obs_breakout,thompson_coefficent_breakout):
-
-    return temp_obs -  temp_obs_breakout*np.power(time/time_breakout,-2/3)*np.power(thompson_coefficent(temp_obs,density_breakout,time_breakout,time)/thompson_coefficent_breakout,-2)
-
-
 
 
 
 #-----------------------------------------------------------------------------------------------------------------------------
 
-def temp_observable(time,time_breakout,time_transition,velocity_breakout,poly_index, mass_breakout, stellar_radius, velo_index,density_breakout,energy_breakout,coupling_breakout, depth_breakout,radius_breakout,pre_temp):
+def temp_observable(time,time_breakout,time_transition,velocity_breakout,poly_index, mass_breakout, stellar_radius, velo_index,density_breakout,energy_breakout,coupling_breakout, depth_breakout,radius_breakout,pre_temp,acc):
     mass_s = mass_shell(mass_breakout,time,time_transition,poly_index,velo_index)
 #    print(mass_s)
-    boltzmann_constant = 8.62*10**(-5)
+
+    temp_BB_breakout = temp_blackbody(time_breakout,time_breakout,time_transition,mass_breakout,velocity_breakout,poly_index,energy_breakout,radius_breakout,depth_breakout,velo_index,stellar_radius)
 
 
-    stefan_boltzmann_constant = 5.67*10**(-8)
-    temp_BB_breakout = temp_blackbody(stellar_radius,time_breakout,time_breakout,time_transition,mass_breakout,velocity_breakout,poly_index,energy_breakout)
-    temp_break1 = (np.power((luminosity(time_breakout,time_breakout,time_transition,energy_breakout,poly_index)*depth_breakout)
-           /(radius_breakout**2*stefan_boltzmann_constant*c),
-           1/4))
-    #print('easy one = ' + str(temp_BB_breakout))
-    #print('Nakar and Saris conoctation = ' + str(temp_break1))
+    coupling_shell = coupling_coefficent(mass_s, mass_breakout, time, time_breakout, time_transition, poly_index, velocity_breakout, density_breakout,coupling_breakout)#
 
-    coupling_shell = coupling_coefficent(mass_s, mass_breakout, time, time_breakout, time_transition, poly_index, velocity_breakout, density_breakout,coupling_breakout)
 
     if time < time_transition:
 
         if coupling_shell < 1:#-------------------------------------------------------------------------------------------------------------------------------------------------------
 
             temp_obs = temp_BB_breakout*np.power(coupling_breakout,(2*(poly_index+1)/(17*poly_index+9)))*np.power(time/time_breakout,-(2*(9*poly_index+5))/(3*(17*poly_index+9)))
+
             return temp_obs
 
         if coupling_shell > 1:#---------------------------------------------------------------------------------------------------------------------------------------------------------
 
-            temp_obs_breakout = coupling_breakout**2*temp_BB_breakout
-            temp_array = np.array([temp_obs_breakout])
-        #    print(temp_obs_breakout)
-            itcount_breakout = 0
-            terminator_breakout = 1
+            compton_breakout = thompson_coefficent(temp_BB_breakout*coupling_breakout**2,density_breakout,time_breakout,time_breakout)
 
-            while terminator_breakout == 1:
+            if compton_breakout == 1:
+                temp_obs_breakout = temp_BB_breakout*coupling_breakout**2
 
-                if thompson_coefficent(temp_obs_breakout,density_breakout,time_breakout,time_breakout) == 1:
+            else:
 
-                    terminator_breakout = 0
-                    thompson_coefficent_breakout = 1
-                #    print("breakout thompson coefficent = 1 | " + str(itcount_breakout)+ " | "+str(temp_obs_breakout))
+                T = np.linspace(temp_BB_breakout,temp_BB_breakout*coupling_breakout**2,1000)
+                xi = np.zeros(len(T))
+                Txi = np.zeros(len(T))
+                comp = np.zeros(len(T))
+                termination = 1
+
+                while termination == 1:
+
+                    for i in range(len(T)):
+
+                        xi[i] = thompson_coefficent(T[i],density_breakout,time_breakout,time_breakout)
+                        Txi[i] = temp_BB_breakout*coupling_breakout**2*(xi[i])**(-2)
+                        comp[i] = Txi[i] - T[i]
+
+                        if np.abs(comp[i]) < acc:
+                            temp_obs_breakout = T[i]
+                            #print('done' + str(T[i]))
+                            termination = 0
+
+                        if comp[i-1] >0 and comp[i]<0 :
+                            p = i
 
 
-                else:
+                    #fig, ax1 = plt.subplots()
+                    #ax2 = ax1.twinx()
+                    #ax1.plot(T,comp, label = 'T_calculated - T_coordinate',color ='red')
+                    #ax2.plot(T,xi, label = 'Compton scattering correction',color = 'green')
+                    #ax1.plot(T,Txi, label = 'T_calculated', color = 'blue')
+                    #lines, labels = ax1.get_legend_handles_labels()
+                    #lines2, labels2 = ax2.get_legend_handles_labels()
 
-                    temp_iter = temp_BB_breakout*coupling_breakout**2/thompson_coefficent(temp_obs_breakout,density_breakout,time_breakout,time_breakout)**(2)
+                    #ax1.set_ylabel('Temperature T_calculated [K]')
+                    #ax2.set_ylabel('Compton scattering correction')
+                    #ax1.set_xlabel('Temperature T_coordinate [K]')
+                    #ax1.axvspan(3.1e6,3.9e6,ymin = 0.43 , ymax= 0.55, color='black',fill = 0)
+                    #ax2.legend(lines + lines2, labels + labels2, loc = 'upper center')
+                    #ax1.grid()
+                    #plt.show()
 
-                    if np.abs(temp_iter-temp_obs_breakout) < 0.0001:
-
-                        temp_obs_breakout = temp_iter
-                        thompson_coefficent_breakout = thompson_coefficent(temp_obs_breakout,density_breakout,time_breakout,time_breakout)
-                        terminator_breakout = 0
-                    #    print("breakout solved by iteration | " + str(itcount_breakout)+ " | " +str(temp_obs_breakout))
-
-
-                    else:
-                    #print(thompson_coefficent(temp_obs_breakout,density_breakout,time_breakout,time_breakout))
-                        temp_obs_breakout = temp_iter
-                        temp_array = np.append(temp_array,temp_obs_breakout)
-
-                        itcount_breakout += 1
-
-            #x_shu = np.linspace(0,len(temp_array),len(temp_array))
-            #plt.scatter(x_shu, temp_array)
-            #plt.yscale('log')
-            #plt.show()
-            temp_obs_breakout1 = sp.fsolve(temp_break,coupling_breakout**2*temp_BB_breakout,args=(density_breakout,time_breakout,coupling_breakout,temp_BB_breakout))
-            temp_obs_breakout2 = sp.root(temp_break,coupling_breakout**2*temp_BB_breakout,args=(density_breakout,time_breakout,coupling_breakout,temp_BB_breakout),method = 'anderson')
-            #print('this is the fsolve one'+str(temp_obs_breakout1))
-        #    print('this is the root one'+str(temp_obs_breakout2.x))
-        #    print('this is mine'+str(temp_obs_breakout))
+                    T_iter = np.linspace(T[p-1],T[p],1000)
+                    T = T_iter
 
 #----------------------------------------------------------------------------------------------------------------------------------------------
-            temp_obs_breakout = temp_obs_breakout2.x
             thompson_coefficent_breakout = thompson_coefficent(temp_obs_breakout,density_breakout,time_breakout,time_breakout)
 
             if time == int(time_breakout):
-                print('i have been there')
+
                 return temp_obs_breakout
 
 
             else:
-                temp_obs = pre_temp
-                terminator = 1
-                itcount = 0
-                temp = sp.fsolve(temp_obser, temp_obs,args=(density_breakout,time_breakout,time,coupling_shell,temp_BB_breakout,temp_obs_breakout,thompson_coefficent_breakout))
+                temp_lower = temp_blackbody(time,time_breakout,time_transition,mass_breakout,velocity_breakout,poly_index,energy_breakout,radius_breakout,depth_breakout,velo_index,stellar_radius)
+                temp_upper = temp_lower*coupling_shell**2
+                compton = thompson_coefficent(temp_upper,density_breakout,time_breakout,time)
 
-                return temp
+                if compton == 1:
+                    temp = temp_upper
+                    return temp
+
+                else:
+
+                    T = np.linspace(temp_lower,temp_upper,1000)
+                    xi = np.zeros(len(T))
+                    Txi = np.zeros(len(T))
+                    comp = np.zeros(len(T))
+                    termination = 1
+
+                    while termination == 1:
+
+                        for i in range(len(T)):
+
+                            xi[i] = thompson_coefficent(T[i],density_breakout,time_breakout,time)
+                            Txi[i] = temp_obs_breakout*np.power(time/time_breakout,-2/3)*np.power(xi[i]/thompson_coefficent_breakout,-2)
+                            comp[i] = Txi[i] - T[i]
+
+                            if np.abs(comp[i]) < acc:
+                                temp = T[i]
+                                #print('done' + str(T[i]))
+                                termination = 0
+                                return temp
+
+                            if comp[i-1] >0 and comp[i]<0 :
+                                p = i
+
+
+                        #fig, ax1 = plt.subplots()
+                        #ax2 = ax1.twinx()
+                        #ax1.plot(T,comp, label = 'T_calculated - T_coordinate second loop',color ='red')
+                        #ax2.plot(T,xi, label = 'Compton scattering correction',color = 'green')
+                        #ax1.plot(T,Txi, label = 'T_calculated', color = 'blue')
+                        #lines, labels = ax1.get_legend_handles_labels()
+                        #lines2, labels2 = ax2.get_legend_handles_labels()
+
+                        #ax1.set_ylabel('Temperature T_calculated [K]')
+                        #ax2.set_ylabel('Compton scattering correction')
+                        #ax1.set_xlabel('Temperature T_coordinate [K]')
+                    #ax1.axvspan(3.1e6,3.9e6,ymin = 0.43 , ymax= 0.55, color='black',fill = 0)
+                        #ax2.legend(lines + lines2, labels + labels2, loc = 'upper center')
+                        #ax1.grid()
+                        #plt.show()
 
 
 
+                        T_iter = np.linspace(T[p-1],T[p],1000)
+                        T = T_iter
 
-                while terminator == 1:
-
-                    if thompson_coefficent(temp_obs,density_breakout,time_breakout,time) == thompson_coefficent(temp_obs,density_breakout,time_breakout,time):
-
-                        terminator = 0
-                        temp_obs = pre_temp
-                        #    print("observable thompson coefficent = 1 | " + str(itcount)+ " | "+str(temp_obs))
-                        return temp_obs
-
-                    else:
-
-                        temp_obs_new = temp_obs_breakout*np.power(time/time_breakout,-2/3)*np.power(thompson_coefficent(temp_obs,density_breakout,time_breakout,time)/thompson_coefficent_breakout,-2)
-
-
-
-                        if np.abs(temp_obs_new-temp_obs) < 0.1:
-
-                            terminator = 0
-                            temp_obs = temp_obs_new
-                            #        print("observable solved by iteration | " + str(itcount)+ " | " +str(temp_obs))
-                            #x_shu = np.linspace(0,len(temp_array),len(temp_array))
-                            #plt.scatter(x_shu, temp_array)
-                            #plt.yscale('log')
-                            #plt.show()
-                            return temp_obs
-
-                        else:
-                            if itcount > 500:
-                                terminater = 0
-                                return temp_obs
-                            temp_obs = temp_obs_new
-                            #print('solving observable' +str(itcount))
-                            temp_array = np.append(temp_array,temp_obs)
-                            itcount += 1
 
 
 
@@ -283,6 +307,7 @@ def temp_observable(time,time_breakout,time_transition,velocity_breakout,poly_in
                     *np.power(coupling_breakout,2*(1.76*poly_index+1)/(22.32*poly_index+17))
                     *np.power(time_transition/time_breakout,-(8.03*poly_index+6)/(22.32*poly_index+17))
                     *np.power(time/time_transition,-(18.48*poly_index**2+20.69*poly_index+6)/((1.19*poly_index+1)*(22.32*poly_index+17))))
+
 
             return temp_obs
 
